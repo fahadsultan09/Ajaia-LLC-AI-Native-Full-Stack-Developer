@@ -4,7 +4,11 @@ import { prisma } from "./prisma/client";
 
 const app = express();
 
-app.use(cors({ origin: "http://localhost:5173" })); // Enable CORS for Vite FE
+app.use(cors({
+  origin: "*", // Allows requests from Vercel deployment
+  credentials: true
+}));
+
 app.use(express.json());
 
 app.get("/", (_, res) => {
