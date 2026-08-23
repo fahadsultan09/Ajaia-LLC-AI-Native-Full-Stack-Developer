@@ -41,7 +41,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
     try {
       const fetchedUsers = await api.getUsers();
       const defaultUser = fetchedUsers[0] || { id: 'user_alice', name: 'Alice', email: 'alice@example.com' };
-      const docs = await api.getDocuments(defaultUser.id);
+      const docs = await api.getDocuments(String(defaultUser.id));
 
       set({
         users: fetchedUsers,
@@ -66,7 +66,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
 
       const newActivity: Activity = {
         id: `act-${Date.now()}`,
-        userId: currentUser?.id || 'user_alice',
+        userId: String(currentUser?.id || 'user_alice'),
         userName: currentUser?.name || 'Alice',
         action: `created "${newDoc.title}"`,
         timestamp: new Date().toISOString(),
@@ -93,13 +93,13 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
     }
   },
 
-  switchUser: async (userId) => {
-    const targetUser = get().users.find((u) => u?.id === userId);
+  switchUser: async (userId: string) => {
+    const targetUser = get().users.find((u) => String(u?.id) === String(userId));
     if (!targetUser) return;
 
     set({ currentUser: targetUser, isLoading: true });
     try {
-      const docs = await api.getDocuments(targetUser.id);
+      const docs = await api.getDocuments(String(targetUser.id));
       set({
         documents: docs,
         selectedDocId: docs[0]?.id || null,
@@ -113,7 +113,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
 
   shareDocument: (docId: string, targetUserId: string) => {
     const { documents, currentUser, users } = get();
-    const targetUser = users.find((u) => u.id === targetUserId);
+    const targetUser = users.find((u) => String(u.id) === String(targetUserId));
 
     set({
       documents: documents.map((doc) => {
@@ -128,7 +128,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
       activities: currentUser && targetUser ? [
         {
           id: `act-${Date.now()}`,
-          userId: currentUser.id,
+          userId: String(currentUser.id),
           userName: currentUser.name,
           action: `shared a document with ${targetUser.name}`,
           timestamp: new Date().toISOString(),
@@ -153,7 +153,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
         isSaving: false,
       }));
     } catch (err) {
-      console.error("Failed to import document:", err);
+      console.error('Failed to import document:', err);
       set({ isSaving: false });
     }
   },
