@@ -12,12 +12,12 @@ interface DocumentState {
   isLoading: boolean;
   isInitialized: boolean;
 
-  // Async Actions
   fetchInitialData: () => Promise<void>;
   selectDocument: (id: string) => void;
   createDocument: () => Promise<void>;
   updateDocument: (id: string, updates: Partial<DocumentItem>) => Promise<void>;
   switchUser: (userId: string) => Promise<void>;
+  shareDocument: (docId: string, targetUserId: string) => void;
   setIsSaving: (saving: boolean) => void;
   importDocument: (title: string, content: string) => Promise<void>;
 }
@@ -29,21 +29,18 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
   currentUser: null,
   activities: [],
   isSaving: false,
-  isLoading: false, // Changed from true to false
+  isLoading: false,
   isInitialized: false,
 
   setIsSaving: (saving) => set({ isSaving: saving }),
 
   fetchInitialData: async () => {
-    // Now this correctly checks if it's already fetching or done
     if (get().isInitialized || get().isLoading) return;
 
     set({ isLoading: true });
     try {
-      console.log('Fetching users and documents from API...');
       const fetchedUsers = await api.getUsers();
       const defaultUser = fetchedUsers[0] || { id: 'user_alice', name: 'Alice', email: 'alice@example.com' };
-      
       const docs = await api.getDocuments(defaultUser.id);
 
       set({
@@ -114,7 +111,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
     }
   },
 
-  shareDocument: (docId, targetUserId) => {
+  shareDocument: (docId: string, targetUserId: string) => {
     const { documents, currentUser, users } = get();
     const targetUser = users.find((u) => u.id === targetUserId);
 
@@ -140,30 +137,24 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
       ] : get().activities,
     });
   },
-importDocument: async (title: string, content: string) => {
-  const currentUser = get().currentUser;
-  if (!currentUser) return;
 
-  set({ isSaving: true });
-  try {
-    // 1. Create document entry
-    const newDoc = await api.createDocument(title);
+  importDocument: async (title: string, content: string) => {
+    const currentUser = get().currentUser;
+    if (!currentUser) return;
 
-    // 2. Explicitly push content and imported status
-    const updatedDoc = await api.updateDocument(newDoc.id, {
-      title,
-      content,
-      imported: true,
-    });
+    set({ isSaving: true });
+    try {
+      const newDoc = await api.createDocument(title);
+      const updatedDoc = await api.updateDocument(newDoc.id, { content });
 
-    set((state) => ({
-      documents: [updatedDoc, ...state.documents.filter((d) => d.id !== newDoc.id)],
-      selectedDocId: updatedDoc.id,
-      isSaving: false,
-    }));
-  } catch (err) {
-    console.error("Failed to import document:", err);
-    set({ isSaving: false });
-  }
-},
+      set((state) => ({
+        documents: [updatedDoc, ...state.documents.filter((d) => d.id !== newDoc.id)],
+        selectedDocId: updatedDoc.id,
+        isSaving: false,
+      }));
+    } catch (err) {
+      console.error("Failed to import document:", err);
+      set({ isSaving: false });
+    }
+  },
 }));

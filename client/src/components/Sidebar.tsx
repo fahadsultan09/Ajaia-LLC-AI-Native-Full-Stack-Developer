@@ -1,4 +1,4 @@
-import { FileText, Share2, Download, Plus, Sparkles } from 'lucide-react';
+import { FileText, Share2, Download, Plus } from 'lucide-react';
 import { useDocumentStore } from '../store/useDocumentStore';
 import { FileUpload } from './FileUpload';
 
