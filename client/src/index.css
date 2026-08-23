@@ -1,0 +1,8 @@
+@import "tailwindcss";
+
+.ProseMirror {
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+  max-width: 100%;
+}
